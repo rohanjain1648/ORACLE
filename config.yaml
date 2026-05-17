@@ -2,11 +2,12 @@
 
 # Market selection filters
 review:
-  max_markets_per_tick: 20        # Limit candidates to top N by liquidity
+  max_markets_per_tick: 20        # Limit candidates to top N by liquidity (harness cap: 20 intents/tick)
   min_volume_24h: 50.0            # Skip illiquid markets (dollars)
   max_spread: 0.15                # Skip wide-spread markets (bid-ask gap)
   max_time_to_resolution_days: 30 # Don't trade very long-dated markets
   min_time_to_resolution_hours: 1 # Don't trade markets resolving in <1h
+  max_positions_per_family: 3     # Diversification cap per topic family
 
 # Web search config
 search:
@@ -29,10 +30,8 @@ forecast:
 action:
   min_edge: 0.05                 # Minimum |probability - market_mid| to trade
   kelly_fraction: 0.25           # Fractional Kelly (1.0 = full Kelly, too aggressive)
-  max_position_notional: 50.0    # Max dollars per trade
-  max_positions_total: 15        # Max open positions at once
-  max_positions_per_family: 3    # Max positions in same topic family
-  size_type: NOTIONAL            # NOTIONAL | SHARES
+  max_position_notional: 100.0   # Max dollars per trade (harness max exposure: $1,000/market)
+  max_positions_total: 28        # Max open positions (harness hard limit: 30)
 
 # Portfolio risk limits
 risk:

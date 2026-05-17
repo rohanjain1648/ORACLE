@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ORACLE — AI Forecasting Hackathon 2026</title>
+<style>
+  /* ── Reset & Base ─────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cyan:    #00e5ff;
+    --cyan2:   #00b8d4;
+    --blue:    #1565c0;
+    --purple:  #7c3aed;
+    --green:   #00e676;
+    --orange:  #ff6d00;
+    --red:     #ff1744;
+    --dark:    #050b18;
+    --dark2:   #0a1628;
+    --dark3:   #0f2040;
+    --card:    rgba(255,255,255,0.04);
+    --border:  rgba(0,229,255,0.2);
+    --text:    #e2e8f0;
+    --muted:   #94a3b8;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ── Deck Container ───────────────────────────────────────── */
+  #deck {
+    width: 100%; height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 48px 64px;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: opacity .5s ease, transform .5s cubic-bezier(.4,0,.2,1);
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .slide.active {
+    opacity: 1; transform: translateX(0);
+    pointer-events: all;
+  }
+  .slide.prev {
+    opacity: 0; transform: translateX(-100%);
+  }
+
+  /* ── Background Grid ──────────────────────────────────────── */
+  .slide::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+
+  /* ── Glow Orbs ────────────────────────────────────────────── */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+  }
+  .orb-cyan  { background: rgba(0,229,255,.12); }
+  .orb-blue  { background: rgba(21,101,192,.15); }
+  .orb-purple{ background: rgba(124,58,237,.12); }
+
+  /* ── Typography ───────────────────────────────────────────── */
+  .slide-tag {
+    font-size: .7rem; font-weight: 700; letter-spacing: .2em;
+    text-transform: uppercase; color: var(--cyan);
+    margin-bottom: 12px;
+  }
+  h1 { font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 800; line-height: 1.1; }
+  h2 { font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 700; line-height: 1.2; }
+  h3 { font-size: 1.1rem; font-weight: 600; color: var(--cyan); margin-bottom: 6px; }
+  p  { line-height: 1.7; color: var(--muted); }
+
+  .gradient-text {
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .accent { color: var(--cyan); }
+  .highlight { color: var(--green); }
+
+  /* ── Cards ────────────────────────────────────────────────── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 28px;
+    backdrop-filter: blur(8px);
+  }
+  .card-grid {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+  }
+  .card-grid-2 { grid-template-columns: 1fr 1fr; }
+  .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card-grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+  /* ── Badge ────────────────────────────────────────────────── */
+  .badge {
+    display: inline-block;
+    padding: 4px 12px; border-radius: 999px;
+    font-size: .72rem; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+  }
+  .badge-cyan   { background: rgba(0,229,255,.15); color: var(--cyan); border: 1px solid rgba(0,229,255,.3); }
+  .badge-green  { background: rgba(0,230,118,.15); color: var(--green); border: 1px solid rgba(0,230,118,.3); }
+  .badge-purple { background: rgba(124,58,237,.2); color: #a78bfa; border: 1px solid rgba(124,58,237,.4); }
+  .badge-orange { background: rgba(255,109,0,.15); color: #fb923c; border: 1px solid rgba(255,109,0,.3); }
+
+  /* ── Pipeline ─────────────────────────────────────────────── */
+  .pipeline {
+    display: flex; align-items: center; gap: 0;
+    width: 100%; justify-content: center;
+  }
+  .pipe-step {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 16px;
+    text-align: center;
+    position: relative;
+  }
+  .pipe-step .num {
+    font-size: .7rem; color: var(--cyan); font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase;
+  }
+  .pipe-step .name {
+    font-size: 1rem; font-weight: 700; margin: 6px 0 4px;
+  }
+  .pipe-step .desc { font-size: .72rem; color: var(--muted); }
+  .pipe-arrow {
+    font-size: 1.5rem; color: var(--cyan);
+    padding: 0 6px; flex-shrink: 0;
+  }
+  .pipe-step.s1 { border-color: rgba(0,229,255,.4); }
+  .pipe-step.s2 { border-color: rgba(124,58,237,.4); }
+  .pipe-step.s3 { border-color: rgba(0,230,118,.4); }
+  .pipe-step.s4 { border-color: rgba(255,109,0,.4); }
+  .pipe-step.s1 .name { color: var(--cyan); }
+  .pipe-step.s2 .name { color: #a78bfa; }
+  .pipe-step.s3 .name { color: var(--green); }
+  .pipe-step.s4 .name { color: #fb923c; }
+
+  /* ── Table ────────────────────────────────────────────────── */
+  table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  th {
+    text-align: left; padding: 10px 14px;
+    color: var(--cyan); font-weight: 700;
+    border-bottom: 1px solid var(--border);
+    font-size: .7rem; letter-spacing: .1em; text-transform: uppercase;
+  }
+  td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.04); color: var(--muted); }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { color: var(--text); font-weight: 600; }
+  tr:hover td { background: rgba(0,229,255,.03); }
+
+  /* ── Code block ───────────────────────────────────────────── */
+  .code-block {
+    background: rgba(0,0,0,.5);
+    border: 1px solid rgba(0,229,255,.15);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: .75rem;
+    color: var(--cyan);
+    line-height: 1.8;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .code-comment { color: #4a5568; }
+  .code-green   { color: var(--green); }
+  .code-orange  { color: #fb923c; }
+  .code-purple  { color: #a78bfa; }
+
+  /* ── Stat cards ───────────────────────────────────────────── */
+  .stat { text-align: center; }
+  .stat .val {
+    font-size: 2.8rem; font-weight: 800;
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+  .stat .label { font-size: .75rem; color: var(--muted); margin-top: 4px; letter-spacing: .05em; }
+
+  /* ── Arch diagram ─────────────────────────────────────────── */
+  .arch-box {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    background: var(--card);
+    font-size: .78rem;
+    text-align: center;
+  }
+  .arch-label { font-size: .65rem; color: var(--muted); margin-bottom: 4px; letter-spacing: .08em; text-transform: uppercase; }
+  .arch-title { font-weight: 700; color: var(--text); }
+
+  /* ── Progress bar ─────────────────────────────────────────── */
+  #progress-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 3px;
+    background: rgba(255,255,255,.06);
+    z-index: 100;
+  }
+  #progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    transition: width .4s ease;
+  }
+
+  /* ── Nav ──────────────────────────────────────────────────── */
+  #nav {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(10,22,40,.85);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    border-radius: 999px;
+    padding: 8px 20px;
+    z-index: 100;
+  }
+  #nav button {
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 1.1rem;
+    transition: color .2s;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+  #nav button:hover { color: var(--cyan); background: rgba(0,229,255,.08); }
+  #slide-counter {
+    font-size: .75rem; color: var(--muted); min-width: 60px; text-align: center;
+    font-weight: 600; letter-spacing: .05em;
+  }
+
+  /* ── Slide number dots ────────────────────────────────────── */
+  #dots {
+    position: fixed; right: 24px; top: 50%; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 8px;
+    z-index: 100;
+  }
+  .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,.2);
+    cursor: pointer; transition: all .2s;
+  }
+  .dot.active { background: var(--cyan); transform: scale(1.4); }
+  .dot:hover  { background: var(--cyan2); }
+
+  /* ── Slide-specific layouts ───────────────────────────────── */
+  .slide-content { width: 100%; max-width: 1200px; z-index: 1; }
+  .text-center { text-align: center; }
+  .mb-4  { margin-bottom: 16px; }
+  .mb-6  { margin-bottom: 24px; }
+  .mb-8  { margin-bottom: 32px; }
+  .mt-4  { margin-top: 16px; }
+  .gap-4 { gap: 16px; }
+  .flex  { display: flex; }
+  .flex-col { flex-direction: column; }
+  .items-center { align-items: center; }
+  .justify-center { justify-content: center; }
+  .w-full { width: 100%; }
+
+  /* Kelly formula */
+  .formula {
+    font-family: 'Cascadia Code', monospace;
+    font-size: 1.1rem;
+    color: var(--cyan);
+    background: rgba(0,229,255,.06);
+    border: 1px solid rgba(0,229,255,.2);
+    border-radius: 10px;
+    padding: 16px 24px;
+    text-align: center;
+    margin: 12px 0;
+  }
+
+  /* step list */
+  .step-list { list-style: none; }
+  .step-list li {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.05);
+  }
+  .step-list li:last-child { border-bottom: none; }
+  .step-num {
+    min-width: 28px; height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    color: #000; font-weight: 800; font-size: .75rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .step-body .step-title { font-weight: 600; font-size: .9rem; margin-bottom: 2px; }
+  .step-body .step-desc { font-size: .78rem; color: var(--muted); }
+
+  /* comparison */
+  .compare-winner td:nth-child(2) { color: var(--green) !important; }
+
+  /* flow arrow vertical */
+  .flow-down {
+    text-align: center; color: var(--cyan); font-size: 1.4rem; line-height: 1;
+    margin: 4px 0;
+  }
+
+  /* risk card */
+  .risk-meter {
+    height: 6px; border-radius: 3px; background: rgba(255,255,255,.08);
+    margin-top: 8px; overflow: hidden;
+  }
+  .risk-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--green), var(--cyan));
+  }
+
+  /* ensemble */
+  .model-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 8px;
+  }
+  .model-weight {
+    font-size: 1.5rem; font-weight: 800; color: var(--cyan);
+    min-width: 56px;
+  }
+  .model-name { font-weight: 600; font-size: .9rem; }
+  .model-role { font-size: .75rem; color: var(--muted); }
+
+  /* title slide logo */
+  .logo-glyph {
+    font-size: 5rem; font-weight: 900;
+    background: linear-gradient(135deg, var(--cyan) 0%, var(--purple) 60%, var(--cyan) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -.02em;
+    line-height: 1;
+  }
+
+  /* scroll hint */
+  @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+  .pulse { animation: pulse 2s infinite; }
+
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .float { animation: float 4s ease-in-out infinite; }
+
+  @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  .slide.active .slide-content > * {
+    animation: fadeInUp .5s ease both;
+  }
+  .slide.active .slide-content > *:nth-child(2) { animation-delay: .08s; }
+  .slide.active .slide-content > *:nth-child(3) { animation-delay: .16s; }
+  .slide.active .slide-content > *:nth-child(4) { animation-delay: .24s; }
+  .slide.active .slide-content > *:nth-child(5) { animation-delay: .32s; }
+</style>
+</head>
+<body>
+
+<div id="deck">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SLIDE 1 — TITLE
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="slide active" id="s1">
+    <div class="orb orb-cyan float"  style="width:600px;height:600px;top:-200px;left:-200px;"></div>
+    <div class="orb orb-purple float" style="width:500px;height:500px;bottom:-200px;right:-150px;animation-delay:2s;"></div>
+    <div class="slide-content text-center">
+      <div class="logo-glyph mb-4">ORACLE</div>
+      <h1 style="font-size:clamp(1rem,2vw,1.4rem);font-weight:400;color:var(--muted);letter-spacing:.3em;text-transform:uppercase;margin-bottom:32px;">
+        Optimal Reasoning Agent for Calibrated Leveraged Execution
+      </h1>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:40px;">
+        <span class="badge badge-cyan">AI Forecasting Hackathon 2026</span>
+        <span class="badge badge-purple">Trading Track</span>
+        <span class="badge badge-green">University of Chicago</span>
+      </div>
+      <p style="max-width:600px;margin:0 auto;font-size:1.05rem;line-height:1.8;color:var(--muted);">
+        An autonomous AI agent that extracts systematic alpha from prediction markets
+        using <span class="accent">superforecaster reasoning</span>,
+        <span style="color:#a78bfa">live web evidence</span>, and
+        <span class="highlight">Kelly-optimal bet sizing</span>.
+      </p>
+      <div style="margin-top:48px;display:flex;gap:40px;justify-content:center;">
+        <div class="stat"><div class="val">96</div><div class="label">Ticks / 2 weeks</div></div>
+        <div class="stat"><div class="val">4</div><div class="label">Pipeline stages</div></div>
+        <div class="stat"><div class="val">25%</div><div class="label">Fractional Kelly</div></div>
+        <div class="stat"><div class="val">5K</div><div class="label">Thinking tokens</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SLIDE 2 — THE PROBLEM
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s2">
+    <div class="orb orb-red" style="width:400px;height:400px;top:-100px;right:-100px;background:rgba(255,23,68,.08);"></div>
+    <div class="slide-content" style="max-width:1000px;">
+      <div class="slide-tag">01 — The Problem</div>
+      <h2 class="mb-6">Prediction markets are <span class="gradient-text">systematically mispriced</span></h2>
+      <div class="card-grid card-grid-2" style="gap:16px;margin-bottom:24px;">
+        <div class="card">
+          <h3>📰 Stale Information</h3>
+          <p style="font-size:.85rem;">Human traders rely on training-data knowledge and manual research. Breaking news takes hours to propagate into prices.</p>
+        </div>
+        <div class="card">
+          <h3>⚓ Anchoring Bias</h3>
+          <p style="font-size:.85rem;">Prices cluster near round numbers — 50%, 70%, 90% — because traders anchor on salient reference points rather than base rates.</p>
+        </div>
+        <div class="card">
+          <h3>🎲 Uncalibrated Confidence</h3>
+          <p style="font-size:.85rem;">Most participants trade on gut feel. Studies show individuals are systematically overconfident on hard questions and underconfident on easy ones.</p>
+        </div>
+        <div class="card">
+          <h3>💸 Poor Position Sizing</h3>
+          <p style="font-size:.85rem;">Fixed-size trading ignores conviction. Traders bet the same on a 10% edge as on a 30% edge, destroying expected value.</p>
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(255,23,68,.3);background:rgba(255,23,68,.05);">
+        <p style="color:var(--text);font-size:.95rem;line-height:1.8;text-align:center;">
+          <strong style="color:#ff6b6b;">The core question:</strong>
+          Can an AI agent exploit these inefficiencies systematically, at scale,<br/>
+          without human intervention — and make a profit doing it?
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SLIDE 3 — THE SOLUTION
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s3">
+    <div class="orb orb-cyan" style="width:500px;height:500px;bottom:-200px;left:-200px;"></div>
+    <div class="slide-content" style="max-width:1000px;">
+      <div class="slide-tag">02 — The Solution</div>
+      <h2 class="mb-6">ORACLE: a fully autonomous <span class="gradient-text">trading agent</span></h2>
+      <div class="pipeline mb-6">
+        <div class="pipe-step s1">
+          <div class="num">Stage 1</div>
+          <div class="name">REVIEW</div>
+          <div class="desc">Filter 50–200 Kalshi markets by liquidity, spread & time</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step s2">
+          <div class="num">Stage 2</div>
+          <div class="name">SEARCH</div>
+          <div class="desc">Tavily web search + Claude synthesis per market</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step s3">
+          <div class="num">Stage 3</div>
+          <div class="name">FORECAST</div>
+          <div class="desc">Superforecaster prompt + extended thinking → p ∈ [0,1]</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step s4">
+          <div class="num">Stage 4</div>
+          <div class="name">ACTION</div>
+          <div class="desc">Fractional Kelly sizing + risk guards → trade intents</div>
+        </div>
+      </div>
+      <div class="card-grid card-grid-3">
+        <div class="card text-center">
+          <div style="font-size:2rem;margin-bottom:8px;">⏱️</div>
+          <h3>Every 15 Minutes</h3>
+          <p style="font-size:.8rem;">Full pipeline runs on each tick — continuously updating as markets move and news breaks.</p>
+        </div>
+        <div class="card text-center">
+          <div style="font-size:2rem;margin-bottom:8px;">🤖</div>
+          <h3>Zero Human Input</h3>
+          <p style="font-size:.8rem;">Fully autonomous from start to finish. Deploy once, runs for 2 weeks unattended.</p>
+        </div>
+        <div class="card text-center">
+          <div style="font-size:2rem;margin-bottom:8px;">📊</div>
+          <h3>Stateless Design</h3>
+          <p style="font-size:.8rem;">All state lives on the Prophet Arena server. Crash-safe — just restart and resume.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SLIDE 4 — INNOVATION
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s4">
+    <div class="orb orb-purple" style="width:450px;height:450px;top:-150px;right:-100px;"></div>
+    <div class="slide-content" style="max-width:1000px;">
+      <div class="slide-tag">03 — Innovation</div>
+      <h2 class="mb-6">Four ideas. <span class="gradient-text">None combined before.</span></h2>
+      <ul class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Superforecaster Prompt Engineering</div>
+            <div class="step-desc">Five-step structured decomposition (reference class → inside view → outside view → market anchor → calibration check) borrowed from Tetlock's Good Judgment Project. Forces explicit reasoning instead of pattern-matching to a number.</div>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Extended Thinking for Hard Markets</div>
+            <div class="step-desc">Claude Sonnet 4.6's native extended thinking allocates 5,000 dedicated reasoning tokens before producing a final probability — "slow thinking" for complex, multi-factor events where the answer isn't obvious.</div>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Fractional Kelly Criterion Sizing</div>
+            <div class="step-desc">Mathematically optimal position sizing: bet proportional to conviction. 25% fractional Kelly maximizes expected log-wealth with a 4× safety margin for imperfect probability estimates.</div>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Live Web Evidence Per Tick</div>
+            <div class="step-desc">Two targeted Tavily searches per market per tick surface breaking news, polls, and expert commentary — then synthesized by Claude before forecasting. Prices update every 15 minutes; ORACLE's evidence does too.</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SLIDE 5 — SYSTEM ARCHITECTURE
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s5">
+    <div class="orb orb-blue" style="width:500px;height:500px;bottom:-200px;right:-100px;"></div>
+    <div class="slide-content" style="max-width:1100px;">
+      <div class="slide-tag">04 — System Architecture</div>
+      <h2 class="mb-6">Clean, <span class="gradient-text">modular</span> design</h2>
+      <div style="display:grid;grid-template-columns:1fr 2fr 1fr;gap:16px;align-items:start;">
+        <!-- Left: Entry -->
+        <div>
+          <div class="arch-box mb-4">
+            <div class="arch-label">Entry Point</div>
+            <div class="arch-title">main.py</div>
+            <div style="font-size:.7rem;color:var(--muted);margin-top:4px;">CLI · Config · Logging</div>
+          </div>
+          <div class="flow-down">↓</div>
+          <div class="arch-box">
+            <div class="arch-label">Orchestration</div>
+            <div class="arch-title">loop.py</div>
+            <div style="font-size:.7rem;color:var(--muted);margin-top:4px;">Experiment · Ticks · Submit</div>
+          </div>
+        </div>
+        <!-- Center: Pipeline -->
+        <div>
+          <div style="border:1px solid var(--border);border-radius:14px;padding:16px;background:rgba(0,229,255,.03);">
+            <div style="font-size:.65rem;color:var(--cyan);font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-bottom:12px;">pipeline/</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div class="arch-box" style="border-color:rgba(0,229,255,.3);">
+                <div class="arch-label">Stage 1</div>
+                <div class="arch-title" style="color:var(--cyan);">review.py</div>
+                <div style="font-size:.65rem;color:var(--muted);margin-top:2px;">Liquidity · Spread · Family</div>
+              </div>
+              <div class="arch-box" style="border-color:rgba(124,58,237,.3);">
+                <div class="arch-label">Stage 2</div>
+                <div class="arch-title" style="color:#a78bfa;">search.py</div>
+                <div style="font-size:.65rem;color:var(--muted);margin-top:2px;">Tavily · LLM Synthesis</div>
+              </div>
+              <div class="arch-box" style="border-color:rgba(0,230,118,.3);">
+                <div class="arch-label">Stage 3</div>
+                <div class="arch-title" style="color:var(--green);">forecast.py</div>
+                <div style="font-size:.65rem;color:var(--muted);margin-top:2px;">Claude · Thinking · Ensemble</div>
+              </div>
+              <div class="arch-box" style="border-color:rgba(255,109,0,.3);">
+                <div class="arch-label">Stage 4</div>
+                <div class="arch-title" style="color:#fb923c;">action.py</div>
+                <div style="font-size:.65rem;color:var(--muted);margin-top:2px;">Kelly · Risk · Intents</div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:12px;border:1px solid var(--border);border-radius:14px;padding:12px;background:rgba(0,0,0,.2);display:flex;gap:8px;">
+            <div class="arch-box" style="flex:1;">
+              <div class="arch-label">utils/</div>
+              <div class="arch-title" style="font-size:.8rem;">llm.py · search.py</div>
+            </div>
+            <div class="arch-box" style="flex:1;">
+              <div class="arch-label">config</div>
+              <div class="arch-title" style="font-size:.8rem;">Pydantic + YAML</div>
+            </div>
+          </div>
+        </div>
+        <!-- Right: External -->
+        <div>
+          <div class="arch-box mb-4" style="border-color:rgba(0,229,255,.3);">
+            <div class="arch-label">Prophet Arena</div>
+            <div class="arch-title">api.aiprophet.dev</div>
+            <div style="font-size:.7rem;color:var(--muted);margin-top:4px;">ai-prophet-core SDK</div>
+          </div>
+          <div class="arch-box mb-4" style="border-color:rgba(124,58,237,.3);">
+            <div class="arch-label">LLM</div>
+            <div class="arch-title">Anthropic Claude</div>
+            <div style="font-size:.7rem;color:var(--muted);margin-top:4px;">Sonnet 4.6 + Haiku 4.5</div>
+          </div>
+          <div class="arch-box" style="border-color:rgba(0,230,118,.3);">
+            <div class="arch-label">Search</div>
+            <div class="arch-title">Tavily Advanced</div>
+            <div style="font-size:.7rem;color:var(--muted);margin-top:4px;">2 queries × 5 results</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SLIDE 6 — PIPELINE DEEP DIVE
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s6">
+    <div class="orb orb-cyan" style="width:400px;height:400px;top:-100px;left:-100px;"></div>
+    <div class="slide-content" style="max-width:1100px;">
+      <div class="slide-tag">05 — Pipeline Deep Dive</div>
+      <h2 class="mb-6">What happens inside <span class="gradient-text">each tick</span></h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card" style="border-color:rgba(0,229,255,.3);">
+          <h3 style="color:var(--cyan);">① REVIEW — Market Selection</h3>
+          <ul style="list-style:none;margin-top:8px;">
+            <li style="font-size:.8rem;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">✓ volume_24h ≥ $50 <span style="float:right;color:var(--text);">Liquidity filter</span></li>
+            <li style="font-size:.8rem;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">✓ bid–ask spread ≤ 15% <span style="float:right;color:var(--text);">Efficiency filter</span></li>
+            <li style="font-size:.8rem;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">✓ 1h &lt; TTR &lt; 30 days <span style="float:right;color:var(--text);">Time filter</span></li>
+            <li style="font-size:.8rem;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">✓ Max 3 per topic family <span style="float:right;color:var(--text);">Diversity</span></li>
+            <li style="font-size:.8rem;color:var(--muted);padding:4px 0;">✓ Skip open positions <span style="float:right;color:var(--text);">No double-dip</span></li>
+          </ul>
+        </div>
+        <div class="card" style="border-color:rgba(124,58,237,.3);">
+          <h3 style="color:#a78bfa;">② SEARCH — Evidence Gathering</h3>
+          <ul style="list-style:none;margin-top:8px;">
+            <li style="font-size:.8rem;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">→ Generate 2 queries per market <span style="float:right;color:var(--text);">Targeted</span></li>
+            <li style="font-size:.8rem;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">→ Tavily advanced search (5 results each) <span style="float:right;color:var(--text);">Fresh</span></li>
+            <li style="font-size:.8rem;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">→ Deduplicate by URL <span style="float:right;color:var(--text);">Clean</span></li>
+            <li style="font-size:.8rem;color:var(--muted);padding:4px 0;">→ Claude Haiku synthesis → evidence paragraph <span style="float:right;color:var(--text);">Cheap</span></li>
+          </ul>
+        </div>
+        <div class="card" style="border-color:rgba(0,230,118,.3);">
+          <h3 style="color:var(--green);">③ FORECAST — Probability Estimation</h3>
+          <ul style="list-style:none;margin-top:8px;">
+            <li style="font-size:.8rem;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">→ Superforecaster 5-step prompt <span style="float:right;color:var(--text);">Structured</span></li>
+            <li style="font-size:.8rem;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">→ Claude Sonnet 4.6 + 5K thinking tokens <span style="float:right;color:var(--text);">Deep</span></li>
+            <li style="font-size:.8rem;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">→ Haiku ensemble (25% weight) <span style="float:right;color:var(--text);">Diverse</span></li>
+            <li style="font-size:.8rem;color:var(--muted);padding:4px 0;">→ p clamped to [0.02, 0.98] <span style="float:right;color:var(--text);">Calibrated</span></li>
+          </ul>
+        </div>
+        <div class="card" style="border-color:rgba(255,109,0,.3);">
+          <h3 style="color:#fb923c;">④ ACTION — Trade Sizing</h3>
+          <ul style="list-style:none;margin-top:8px;">
+            <li style="font-size:.8rem;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">→ Skip if edge &lt; 5% <span style="float:right;color:var(--text);">No noise</span></li>
+            <li style="font-size:.8rem;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">→ 25% fractional Kelly sizing <span style="float:right;color:var(--text);">Optimal</span></li>
+            <li style="font-size:.8rem;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">→ Cap per trade at $50 <span style="float:right;color:var(--text);">Safe</span></li>
+            <li style="font-size:.8rem;color:var(--muted);padding:4px 0;">→ Halt at 30% drawdown <span style="float:right;color:var(--text);">Protected</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SLIDE 7 — AI DEEP DIVE
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s7">
+    <div class="orb orb-purple" style="width:500px;height:500px;bottom:-150px;left:-150px;"></div>
+    <div class="slide-content" style="max-width:1050px;">
+      <div class="slide-tag">06 — AI Deep Dive</div>
+      <h2 class="mb-6">Claude Sonnet 4.6 + <span class="gradient-text">Superforecaster Prompt</span></h2>
+      <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:20px;align-items:start;">
+        <div>
+          <h3 style="margin-bottom:10px;">The 5-Step Reasoning Chain</h3>
+          <ul class="step-list" style="font-size:.82rem;">
+            <li><div class="step-num" style="font-size:.65rem;">1</div><div class="step-body"><div class="step-title">REFERENCE CLASS</div><div class="step-desc">What category is this? What's the base rate of YES?</div></div></li>
+            <li><div class="step-num" style="font-size:.65rem;">2</div><div class="step-body"><div class="step-title">INSIDE VIEW</div><div class="step-desc">What specific evidence from web search points toward YES vs NO?</div></div></li>
+            <li><div class="step-num" style="font-size:.65rem;">3</div><div class="step-body"><div class="step-title">OUTSIDE VIEW</div><div class="step-desc">How unusual would YES be vs. comparable past events?</div></div></li>
+            <li><div class="step-num" style="font-size:.65rem;">4</div><div class="step-body"><div class="step-title">MARKET ANCHOR</div><div class="step-desc">Market prices this at X%. Why might the market be wrong?</div></div></li>
+            <li><div class="step-num" style="font-size:.65rem;">5</div><div class="step-body"><div class="step-title">CALIBRATION CHECK</div><div class="step-desc">Am I overconfident? Anchoring too much on market price?</div></div></li>
+          </ul>
+          <div class="code-block" style="margin-top:12px;font-size:.68rem;">
+<span class="code-comment">// Output format (strict JSON)</span>
+{
+  <span class="code-green">"probability"</span>: <span class="code-orange">0.73</span>,
+  <span class="code-green">"reasoning"</span>: <span class="code-purple">"Base rate 60%..."</span>,
+  <span class="code-green">"confidence"</span>: <span class="code-purple">"high"</span>
+}</div>
+        </div>
+        <div>
+          <h3 style="margin-bottom:10px;">Ensemble Architecture</h3>
+          <div class="model-row" style="border-color:rgba(0,229,255,.3);">
+            <div class="model-weight">75%</div>
+            <div>
+              <div class="model-name">Claude Sonnet 4.6</div>
+              <div class="model-role">Primary · Extended thinking · 5K tokens</div>
+            </div>
+          </div>
+          <div class="model-row" style="border-color:rgba(124,58,237,.3);">
+            <div class="model-weight" style="color:#a78bfa;">25%</div>
+            <div>
+              <div class="model-name">Claude Haiku 4.5</div>
+              <div class="model-role">Ensemble · Fast · Bias correction</div>
+            </div>
+          </div>
+          <div style="text-align:center;padding:12px;background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.2);border-radius:10px;margin-top:12px;">
+            <div style="font-size:.7rem;color:var(--muted);margin-bottom:4px;">WEIGHTED AVERAGE</div>
+            <div style="font-size:1rem;font-family:monospace;color:var(--cyan);">p_final = 0.75·p₁ + 0.25·p₂</div>
+          </div>
+          <div class="card" style="margin-top:12px;">
+            <h3>Why Extended Thinking?</h3>
+            <p style="font-size:.78rem;margin-top:4px;">Prediction markets require weighing multiple competing hypotheses. Extended thinking is "System 2" reasoning — deliberate, step-by-step — vs. the pattern-matching of standard generation. Empirically reduces overconfidence on hard questions.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SLIDE 8 — KELLY CRITERION
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s8">
+    <div class="orb orb-green" style="width:400px;height:400px;top:-100px;right:-100px;background:rgba(0,230,118,.08);"></div>
+    <div class="slide-content" style="max-width:1000px;">
+      <div class="slide-tag">07 — Position Sizing</div>
+      <h2 class="mb-4">The <span class="gradient-text">Kelly Criterion</span> — mathematically optimal</h2>
+      <p style="margin-bottom:20px;max-width:700px;">For a binary market where YES costs <em>q</em> per share, our probability is <em>p</em>, and we have <em>B</em> dollars of available cash:</p>
+      <div class="formula">
+        edge = |p<sub>oracle</sub> − market_mid|<br/>
+        kelly_fraction = edge ÷ (1 − entry_price)<br/>
+        notional = kelly_fraction × <strong>0.25</strong> × available_cash
+      </div>
+      <div class="card-grid card-grid-3" style="margin-top:16px;margin-bottom:16px;">
+        <div class="card text-center">
+          <div style="font-size:1.8rem;font-weight:800;color:var(--green);">25%</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:4px;">Fractional Kelly factor<br/>4× safety margin</div>
+        </div>
+        <div class="card text-center">
+          <div style="font-size:1.8rem;font-weight:800;color:var(--cyan);">5%</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:4px;">Minimum edge threshold<br/>No noise trades</div>
+        </div>
+        <div class="card text-center">
+          <div style="font-size:1.8rem;font-weight:800;color:#fb923c;">$50</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:4px;">Max notional per trade<br/>Concentration limit</div>
+        </div>
+      </div>
+      <div class="card" style="background:rgba(0,230,118,.05);border-color:rgba(0,230,118,.3);">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div>
+            <h3 style="color:var(--green);">Example: High Conviction</h3>
+            <div style="font-size:.8rem;color:var(--muted);line-height:1.8;margin-top:6px;">
+              Market mid: 0.40 · Our p: 0.60<br/>
+              Edge: 0.20 · Kelly: 0.20/0.60 = 33%<br/>
+              Notional: 33% × 25% × $800 = <strong style="color:var(--green);">$66 → capped $50</strong>
+            </div>
+          </div>
+          <div>
+            <h3 style="color:#fb923c);">Example: Marginal Edge</h3>
+            <div style="font-size:.8rem;color:var(--muted);line-height:1.8;margin-top:6px;">
+              Market mid: 0.50 · Our p: 0.56<br/>
+              Edge: 0.06 · Kelly: 0.06/0.50 = 12%<br/>
+              Notional: 12% × 25% × $800 = <strong style="color:#fb923c;">$24</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SLIDE 9 — TECH STACK
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s9">
+    <div class="orb orb-blue" style="width:500px;height:500px;top:-200px;left:-100px;"></div>
+    <div class="slide-content" style="max-width:1000px;">
+      <div class="slide-tag">08 — Tech Stack</div>
+      <h2 class="mb-6">Built on <span class="gradient-text">best-in-class</span> tooling</h2>
+      <table>
+        <thead>
+          <tr><th>Layer</th><th>Technology</th><th>Version</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Runtime</td><td>Python</td><td>3.12</td><td>Core language</td></tr>
+          <tr><td>Market SDK</td><td>ai-prophet-core</td><td>0.1.5</td><td>Prophet Arena API client + data models</td></tr>
+          <tr><td>Primary LLM</td><td>Claude Sonnet 4.6</td><td>Latest</td><td>Forecasting with extended thinking</td></tr>
+          <tr><td>Ensemble LLM</td><td>Claude Haiku 4.5</td><td>Latest</td><td>Search synthesis + ensemble diversity</td></tr>
+          <tr><td>Web Search</td><td>Tavily Advanced</td><td>0.7.24</td><td>Real-time news and evidence retrieval</td></tr>
+          <tr><td>Config</td><td>Pydantic v2 + PyYAML</td><td>—</td><td>Typed settings, env var overrides</td></tr>
+          <tr><td>Resilience</td><td>Tenacity</td><td>—</td><td>Exponential backoff on all external calls</td></tr>
+          <tr><td>CLI / UX</td><td>Rich</td><td>—</td><td>Colored logs, structured output</td></tr>
+          <tr><td>Concurrency</td><td>ThreadPoolExecutor</td><td>stdlib</td><td>Parallel market forecasting (5 workers)</td></tr>
+        </tbody>
+      </table>
+      <div class="card-grid card-grid-3" style="margin-top:16px;">
+        <div class="card text-center">
+          <span class="badge badge-green">Zero External DB</span>
+          <p style="font-size:.75rem;margin-top:8px;">Stateless — Prophet Arena owns all persistence</p>
+        </div>
+        <div class="card text-center">
+          <span class="badge badge-cyan">MIT License</span>
+          <p style="font-size:.75rem;margin-top:8px;">Fully open source, forkable by anyone</p>
+        </div>
+        <div class="card text-center">
+          <span class="badge badge-purple">No Docker Required</span>
+          <p style="font-size:.75rem;margin-top:8px;">Pure Python venv — ./run.sh is all you need</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SLIDE 10 — DATA FLOW
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s10">
+    <div class="orb orb-cyan" style="width:400px;height:400px;bottom:-100px;right:-100px;"></div>
+    <div class="slide-content" style="max-width:1000px;">
+      <div class="slide-tag">09 — Data Flow & State</div>
+      <h2 class="mb-6">Everything <span class="gradient-text">typed end-to-end</span></h2>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;gap:8px;align-items:center;">
+        <div class="arch-box" style="text-align:center;">
+          <div class="arch-label">Prophet Arena</div>
+          <div class="arch-title" style="font-size:.8rem;">CandidatesResponse</div>
+          <div style="font-size:.65rem;color:var(--muted);margin-top:4px;">list[MarketData]<br/>quote: MarketQuote<br/>best_bid: str ⚠</div>
+        </div>
+        <div style="color:var(--cyan);font-size:1.2rem;">→</div>
+        <div class="arch-box" style="text-align:center;border-color:rgba(0,229,255,.3);">
+          <div class="arch-label">review.py</div>
+          <div class="arch-title" style="font-size:.8rem;color:var(--cyan);">list[MarketData]</div>
+          <div style="font-size:.65rem;color:var(--muted);margin-top:4px;">Filtered<br/>Scored<br/>Ranked</div>
+        </div>
+        <div style="color:var(--cyan);font-size:1.2rem;">→</div>
+        <div class="arch-box" style="text-align:center;border-color:rgba(0,230,118,.3);">
+          <div class="arch-label">forecast.py</div>
+          <div class="arch-title" style="font-size:.8rem;color:var(--green);">(Market, float, str)</div>
+          <div style="font-size:.65rem;color:var(--muted);margin-top:4px;">probability<br/>reasoning<br/>confidence</div>
+        </div>
+        <div style="color:var(--cyan);font-size:1.2rem;">→</div>
+        <div class="arch-box" style="text-align:center;border-color:rgba(255,109,0,.3);">
+          <div class="arch-label">action.py</div>
+          <div class="arch-title" style="font-size:.8rem;color:#fb923c;">TradeIntentRequest</div>
+          <div style="font-size:.65rem;color:var(--muted);margin-top:4px;">action: str<br/>side: str<br/>shares: str ⚠</div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;background:rgba(255,214,0,.04);border-color:rgba(255,214,0,.2);">
+        <h3 style="color:#fbbf24;">⚠ SDK Type Gotchas (discovered via runtime inspection)</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px;">
+          <div>
+            <div style="font-size:.78rem;color:var(--muted);line-height:1.8;">
+              <code style="color:#fbbf24;">PortfolioResponse.cash</code> → <code style="color:var(--text);">str</code> not float<br/>
+              <code style="color:#fbbf24;">MarketQuote.best_bid/ask</code> → <code style="color:var(--text);">str</code> not float<br/>
+              <code style="color:#fbbf24;">TradeIntentRequest.shares</code> → <code style="color:var(--text);">str</code> not float
+            </div>
+          </div>
+          <div>
+            <div style="font-size:.78rem;color:var(--muted);line-height:1.8;">
+              ORACLE uses <code style="color:var(--green);">_f(val)</code> helper to coerce<br/>
+              Shares formatted as <code style="color:var(--green);">f"{shares:.4f}"</code><br/>
+              Idempotency keys prevent double-fills
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:12px;text-align:center;">
+        <p style="font-size:.85rem;"><strong style="color:var(--cyan);">All state is server-side.</strong> ORACLE holds zero state between ticks — portfolio, positions, and fills all live on the Prophet Arena server. Crash-safe by design.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SLIDE 11 — RISK MANAGEMENT
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s11">
+    <div class="orb orb-red" style="width:400px;height:400px;bottom:-100px;left:-100px;background:rgba(255,23,68,.07);"></div>
+    <div class="slide-content" style="max-width:1000px;">
+      <div class="slide-tag">10 — Risk Management</div>
+      <h2 class="mb-6">Capital preservation <span class="gradient-text">first</span></h2>
+      <div class="card-grid card-grid-2" style="gap:16px;margin-bottom:16px;">
+        <div class="card">
+          <h3>🛑 Drawdown Halt</h3>
+          <p style="font-size:.82rem;margin-top:6px;">If portfolio loses more than <strong style="color:var(--red);">30%</strong> from peak equity, all trading stops for that tick. Prevents loss spirals.</p>
+          <div class="risk-meter mt-4"><div class="risk-fill" style="width:70%;background:linear-gradient(90deg,var(--green),#fbbf24,var(--red));"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--muted);margin-top:4px;"><span>Safe</span><span>Halt at 30%</span></div>
+        </div>
+        <div class="card">
+          <h3>💰 Cash Reserve</h3>
+          <p style="font-size:.82rem;margin-top:6px;">Always keeps <strong style="color:var(--cyan);">20%</strong> of equity as uninvested cash. Ensures liquidity for high-conviction opportunities and covers fees.</p>
+          <div class="risk-meter mt-4"><div class="risk-fill" style="width:80%;"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--muted);margin-top:4px;"><span>20% reserve</span><span>80% deployable</span></div>
+        </div>
+        <div class="card">
+          <h3>📊 Position Limits</h3>
+          <p style="font-size:.82rem;margin-top:6px;">Maximum <strong style="color:var(--cyan);">15 open positions</strong> at any time. Maximum <strong style="color:var(--cyan);">3 positions</strong> in any single topic family. Prevents over-concentration.</p>
+        </div>
+        <div class="card">
+          <h3>⚡ Minimum Edge Gate</h3>
+          <p style="font-size:.82rem;margin-top:6px;">Only trades when <strong style="color:var(--cyan);">|p − market_mid| ≥ 5%</strong>. Sub-threshold markets are silently skipped — no noise trading that bleeds fees.</p>
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(0,230,118,.3);background:rgba(0,230,118,.04);text-align:center;">
+        <p style="font-size:.9rem;">
+          <strong style="color:var(--green);">Philosophy:</strong> An agent that survives all 96 ticks with capital intact beats one that wins 3 big bets and blows up on the 4th.
+          ORACLE is designed for the <strong style="color:var(--green);">long game</strong>.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SLIDE 12 — EVALUATION ALIGNMENT
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s12">
+    <div class="orb orb-purple" style="width:450px;height:450px;top:-150px;right:-100px;"></div>
+    <div class="slide-content" style="max-width:1000px;">
+      <div class="slide-tag">11 — Evaluation Alignment</div>
+      <h2 class="mb-6">Scored purely on <span class="gradient-text">PnL</span> — ORACLE is built for it</h2>
+      <table style="margin-bottom:20px;">
+        <thead>
+          <tr><th>PnL Driver</th><th>How ORACLE Addresses It</th><th>Mechanism</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Find real edge</td><td>Superforecaster decomposition yields probabilities that genuinely diverge from market when justified by evidence</td><td>5-step prompt + web evidence</td></tr>
+          <tr><td>Don't overtrade</td><td>5% minimum edge threshold — only bet on actual conviction, not noise</td><td>action.py gate</td></tr>
+          <tr><td>Size correctly</td><td>Fractional Kelly maximizes expected log-wealth — proven optimal for repeated binary bets</td><td>Kelly formula</td></tr>
+          <tr><td>Protect capital</td><td>30% drawdown halt + 20% reserve prevent ruin from a bad run</td><td>risk guards</td></tr>
+          <tr><td>Stay running</td><td>Retry logic, error isolation, stateless design keep agent alive for all 96 ticks</td><td>tenacity + try/except</td></tr>
+          <tr><td>Fresh information</td><td>Web search per tick — prices update every 15 min, so does our evidence</td><td>Tavily per tick</td></tr>
+        </tbody>
+      </table>
+      <div class="card-grid card-grid-3">
+        <div class="stat card"><div class="val" style="font-size:2rem;">96</div><div class="label">Ticks to run</div></div>
+        <div class="stat card"><div class="val" style="font-size:2rem;">$15</div><div class="label">Est. API cost total</div></div>
+        <div class="stat card"><div class="val" style="font-size:2rem;">~2min</div><div class="label">Per tick runtime</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SLIDE 13 — COMPARISON
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s13">
+    <div class="orb orb-cyan" style="width:400px;height:400px;bottom:-150px;right:-100px;"></div>
+    <div class="slide-content" style="max-width:1050px;">
+      <div class="slide-tag">12 — Comparison</div>
+      <h2 class="mb-6">ORACLE vs <span class="gradient-text">the alternatives</span></h2>
+      <table class="compare-winner">
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th style="color:var(--green);">ORACLE ✓</th>
+            <th>Naive LLM</th>
+            <th>Human Trader</th>
+            <th>Market Baseline</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Evidence source</td><td>Live web search / tick</td><td>Training data only</td><td>Manual research</td><td>Crowd bets</td></tr>
+          <tr><td>Probability method</td><td>5-step decomposition</td><td>Direct generation</td><td>Intuition</td><td>Aggregate prices</td></tr>
+          <tr><td>Position sizing</td><td>Fractional Kelly</td><td>Fixed or random</td><td>Fixed</td><td>N/A</td></tr>
+          <tr><td>Bias mitigation</td><td>Steps 4 & 5 explicit</td><td>None</td><td>Varies</td><td>Anchoring present</td></tr>
+          <tr><td>Drawdown protection</td><td>30% halt + reserve</td><td>None</td><td>Varies</td><td>N/A</td></tr>
+          <tr><td>Scalability</td><td>100s of markets</td><td>100s of markets</td><td>~5 markets</td><td>Unlimited</td></tr>
+          <tr><td>Human intervention</td><td>Zero</td><td>Zero</td><td>Continuous</td><td>N/A</td></tr>
+        </tbody>
+      </table>
+      <div class="card" style="margin-top:16px;background:rgba(0,230,118,.04);border-color:rgba(0,230,118,.3);text-align:center;">
+        <p style="font-size:.9rem;">ORACLE is the <strong style="color:var(--green);">only</strong> approach that combines live evidence, structured decomposition, Kelly sizing, and drawdown protection in a single autonomous agent.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SLIDE 14 — WHY THIS WILL WIN
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s14">
+    <div class="orb orb-cyan" style="width:500px;height:500px;top:-150px;left:-150px;"></div>
+    <div class="orb orb-purple" style="width:400px;height:400px;bottom:-150px;right:-100px;"></div>
+    <div class="slide-content" style="max-width:1000px;">
+      <div class="slide-tag">13 — Why This Will Win</div>
+      <h2 class="mb-8">Five unfair <span class="gradient-text">advantages</span></h2>
+      <div class="card-grid card-grid-2" style="gap:16px;">
+        <div class="card" style="border-color:rgba(0,229,255,.4);background:rgba(0,229,255,.04);">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="font-size:1.5rem;">📐</span>
+            <h3 style="color:var(--cyan);">Mathematically Optimal Sizing</h3>
+          </div>
+          <p style="font-size:.82rem;">Kelly Criterion is provably optimal for maximizing long-run wealth. Over 96 ticks this compounds — agents using fixed sizes leave expected value on the table.</p>
+        </div>
+        <div class="card" style="border-color:rgba(0,230,118,.4);background:rgba(0,230,118,.04);">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="font-size:1.5rem;">📡</span>
+            <h3 style="color:var(--green);">Evidence That Actually Updates</h3>
+          </div>
+          <p style="font-size:.82rem;">Markets are often priced on stale info. When ORACLE finds breaking news that shifts the true probability 10% and the market hasn't moved, that's a real, exploitable edge.</p>
+        </div>
+        <div class="card" style="border-color:rgba(124,58,237,.4);background:rgba(124,58,237,.05);">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="font-size:1.5rem;">🧠</span>
+            <h3 style="color:#a78bfa;">Structured Reasoning Cuts Hallucination</h3>
+          </div>
+          <p style="font-size:.82rem;">Open-ended prompts ("what's the probability?") let LLMs pattern-match to plausible numbers. Five-step decomposition forces explicit reasoning — empirically more calibrated.</p>
+        </div>
+        <div class="card" style="border-color:rgba(251,146,60,.4);background:rgba(251,146,60,.04);">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="font-size:1.5rem;">🔮</span>
+            <h3 style="color:#fb923c;">Extended Thinking on Hard Questions</h3>
+          </div>
+          <p style="font-size:.82rem;">Claude's dedicated reasoning budget gives ORACLE a qualitative edge on complex multi-factor markets where surface features don't reveal the answer.</p>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;text-align:center;border-color:rgba(0,229,255,.3);">
+        <p style="font-size:.95rem;color:var(--text);">
+          <strong style="color:var(--cyan);">⑤ Capital preservation beats home runs.</strong>
+          Agents that make 3 aggressive bets and blow up lose to agents with consistent positive expected value. ORACLE's risk management is built to <em>stay in the game</em>.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SLIDE 15 — SETUP, IMPACT & NEXT STEPS
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s15">
+    <div class="orb orb-purple" style="width:600px;height:600px;bottom:-300px;right:-200px;"></div>
+    <div class="orb orb-cyan" style="width:400px;height:400px;top:-150px;left:-100px;"></div>
+    <div class="slide-content" style="max-width:1100px;">
+      <div class="slide-tag">14 & 15 — Setup · Impact · Future</div>
+      <h2 class="mb-6">Run in <span class="gradient-text">3 steps</span>, win in 2 weeks</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div>
+          <div class="code-block" style="font-size:.72rem;margin-bottom:16px;">
+<span class="code-comment"># 1. Clone & configure</span>
+git clone github.com/you/oracle-ai-forecast
+cp .env.example .env
+<span class="code-comment"># Fill PA_SERVER_API_KEY, ANTHROPIC_API_KEY,</span>
+<span class="code-comment"># TAVILY_API_KEY</span>
+
+<span class="code-comment"># 2. Run (venv created automatically)</span>
+./run.sh
+
+<span class="code-comment"># 3. Optional: smoke test</span>
+./run.sh --ticks 3 --no-search -v</div>
+          <div class="card" style="margin-bottom:12px;">
+            <h3>💰 Estimated Cost (2 weeks)</h3>
+            <table style="margin-top:8px;font-size:.75rem;">
+              <tr><td>Anthropic API (96 ticks)</td><td style="text-align:right;color:var(--cyan);">~$12–18</td></tr>
+              <tr><td>Tavily (free tier)</td><td style="text-align:right;color:var(--green);">$0</td></tr>
+              <tr><td>Prophet Arena</td><td style="text-align:right;color:var(--green);">$0</td></tr>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="card mb-4">
+            <h3>🌍 Real-World Impact</h3>
+            <ul style="list-style:none;font-size:.78rem;margin-top:8px;">
+              <li style="padding:3px 0;color:var(--muted);">🏛 <strong style="color:var(--text);">Policy:</strong> Calibrated AI forecasts for government decisions</li>
+              <li style="padding:3px 0;color:var(--muted);">🏦 <strong style="color:var(--text);">Finance:</strong> LLM-augmented trading in information markets</li>
+              <li style="padding:3px 0;color:var(--muted);">🔬 <strong style="color:var(--text);">Research:</strong> Benchmark for LLM calibration on real events</li>
+              <li style="padding:3px 0;color:var(--muted);">🏢 <strong style="color:var(--text);">Strategy:</strong> Real-time scenario probability for corporates</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>🚀 Future Scope</h3>
+            <ul style="list-style:none;font-size:.78rem;margin-top:8px;">
+              <li style="padding:3px 0;color:var(--muted);">→ Calibration tracking → self-improving Kelly fraction</li>
+              <li style="padding:3px 0;color:var(--muted);">→ Cross-platform arbitrage (Kalshi ↔ Polymarket)</li>
+              <li style="padding:3px 0;color:var(--muted);">→ Sentiment signals from X / Reddit per tick</li>
+              <li style="padding:3px 0;color:var(--muted);">→ RL loop: learn which searches yield most edge</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:16px;">
+        <div class="card" style="flex:1;text-align:center;border-color:rgba(0,229,255,.4);background:rgba(0,229,255,.05);">
+          <div style="font-size:1.1rem;font-weight:800;color:var(--cyan);">Evaluation: May 17–31, 2026</div>
+          <p style="font-size:.78rem;margin-top:4px;">96 ticks · Live Kalshi markets · Real PnL scoring</p>
+        </div>
+        <div class="card" style="flex:1;text-align:center;border-color:rgba(0,230,118,.4);background:rgba(0,230,118,.05);">
+          <div style="font-size:1.1rem;font-weight:800;color:var(--green);">Winner Announced: June 1, 2026</div>
+          <p style="font-size:.78rem;margin-top:4px;">South Korea trip + ICML workshop presentation 🏆</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- ── Progress Bar ──────────────────────────────────────── -->
+<div id="progress-bar"><div id="progress-fill"></div></div>
+
+<!-- ── Navigation ────────────────────────────────────────── -->
+<div id="nav">
+  <button id="btn-prev" title="Previous (←)">&#8592;</button>
+  <span id="slide-counter">1 / 15</span>
+  <button id="btn-next" title="Next (→)">&#8594;</button>
+</div>
+
+<!-- ── Dots ──────────────────────────────────────────────── -->
+<div id="dots"></div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total  = slides.length;
+  let current  = 0;
+
+  const counter = document.getElementById('slide-counter');
+  const fill    = document.getElementById('progress-fill');
+  const dotsEl  = document.getElementById('dots');
+
+  /* Build dots */
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.title = `Slide ${i + 1}`;
+    d.addEventListener('click', () => goTo(i));
+    dotsEl.appendChild(d);
+  });
+
+  function goTo(idx) {
+    if (idx < 0 || idx >= total) return;
+    slides[current].classList.remove('active');
+    slides[current].classList.add('prev');
+    setTimeout(() => slides[current].classList.remove('prev'), 500);
+
+    current = idx;
+    slides[current].classList.add('active');
+
+    /* Update UI */
+    counter.textContent = `${current + 1} / ${total}`;
+    fill.style.width    = `${((current + 1) / total) * 100}%`;
+    document.querySelectorAll('.dot').forEach((d, i) => {
+      d.classList.toggle('active', i === current);
+    });
+  }
+
+  document.getElementById('btn-prev').addEventListener('click', () => goTo(current - 1));
+  document.getElementById('btn-next').addEventListener('click', () => goTo(current + 1));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault(); goTo(current + 1);
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault(); goTo(current - 1);
+    }
+    if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+    if (e.key === 'End')  { e.preventDefault(); goTo(total - 1); }
+  });
+
+  /* Touch swipe */
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend',   e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) goTo(current + (dx < 0 ? 1 : -1));
+  });
+</script>
+</body>
+</html>

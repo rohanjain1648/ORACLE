@@ -18,6 +18,7 @@ class ReviewConfig(BaseModel):
     max_spread: float = 0.15
     max_time_to_resolution_days: int = 30
     min_time_to_resolution_hours: int = 1
+    max_positions_per_family: int = 3
 
 
 class SearchConfig(BaseModel):
@@ -39,10 +40,8 @@ class ForecastConfig(BaseModel):
 class ActionConfig(BaseModel):
     min_edge: float = 0.05
     kelly_fraction: float = 0.25
-    max_position_notional: float = 50.0
-    max_positions_total: int = 15
-    max_positions_per_family: int = 3
-    size_type: str = "NOTIONAL"
+    max_position_notional: float = 100.0   # harness max exposure: $1,000/market
+    max_positions_total: int = 28          # harness hard limit: 30
 
 
 class RiskConfig(BaseModel):
@@ -64,9 +63,9 @@ class OracleConfig(BaseModel):
     openai_api_key: str = Field(default_factory=lambda: os.environ.get("OPENAI_API_KEY", ""))
     tavily_api_key: str = Field(default_factory=lambda: os.environ.get("TAVILY_API_KEY", ""))
 
-    experiment_slug: str = Field(default_factory=lambda: os.environ.get("ORACLE_SLUG", "oracle-v1"))
-    max_ticks: int = Field(default_factory=lambda: int(os.environ.get("ORACLE_MAX_TICKS", "96")))
-    starting_cash: float = Field(default_factory=lambda: float(os.environ.get("ORACLE_STARTING_CASH", "1000.0")))
+    experiment_slug: str = Field(default_factory=lambda: os.environ.get("ORACLE_SLUG", "eval_oracle"))
+    max_ticks: int = Field(default_factory=lambda: int(os.environ.get("ORACLE_MAX_TICKS", "1500")))
+    starting_cash: float = Field(default_factory=lambda: float(os.environ.get("ORACLE_STARTING_CASH", "10000.0")))
     replicates: int = Field(default_factory=lambda: int(os.environ.get("ORACLE_REPLICATES", "1")))
 
 
