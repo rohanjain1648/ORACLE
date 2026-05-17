@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ORACLE — Prophet Hacks 2026 Trading Track
+# ORACLE — AI Forecasting Hackathon 2026 Trading Track
 # Run script for evaluation harness judges.
 #
 # Usage:

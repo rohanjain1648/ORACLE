@@ -1,12 +1,10 @@
-"""ORACLE — Prophet Hacks 2026 Trading Track entry point."""
+"""ORACLE — AI Forecasting Hackathon 2026 Trading Track entry point."""
 
 from __future__ import annotations
 
 import argparse
 import logging
 import sys
-from pathlib import Path
-
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
@@ -25,7 +23,7 @@ BANNER = """\
  ██████  ██   ██ ██   ██  ██████ ███████ ███████
 
 Optimal Reasoning Agent for Calibrated Leveraged Execution
-Prophet Hacks 2026 · Trading Track
+AI Forecasting Hackathon 2026 · Trading Track
 """
 
 
