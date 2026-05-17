@@ -1,0 +1,40 @@
+# ORACLE Agent Configuration
+
+# Market selection filters
+review:
+  max_markets_per_tick: 20        # Limit candidates to top N by liquidity
+  min_volume_24h: 50.0            # Skip illiquid markets (dollars)
+  max_spread: 0.15                # Skip wide-spread markets (bid-ask gap)
+  max_time_to_resolution_days: 30 # Don't trade very long-dated markets
+  min_time_to_resolution_hours: 1 # Don't trade markets resolving in <1h
+
+# Web search config
+search:
+  enabled: true
+  provider: tavily               # tavily | brave | exa | none
+  queries_per_market: 2
+  max_results_per_query: 5
+
+# Forecasting config
+forecast:
+  primary_model: "anthropic:claude-sonnet-4-6"
+  ensemble_models:               # Additional models for ensemble (optional)
+    - "anthropic:claude-haiku-4-5-20251001"
+  ensemble_weight_primary: 0.75  # Weight of primary model in ensemble
+  temperature: 0.3
+  max_tokens: 1500
+  thinking_budget_tokens: 5000   # Extended thinking for harder questions
+
+# Trading / position sizing
+action:
+  min_edge: 0.05                 # Minimum |probability - market_mid| to trade
+  kelly_fraction: 0.25           # Fractional Kelly (1.0 = full Kelly, too aggressive)
+  max_position_notional: 50.0    # Max dollars per trade
+  max_positions_total: 15        # Max open positions at once
+  max_positions_per_family: 3    # Max positions in same topic family
+  size_type: NOTIONAL            # NOTIONAL | SHARES
+
+# Portfolio risk limits
+risk:
+  max_drawdown_pct: 0.30         # Halt trading if drawdown exceeds 30%
+  min_cash_reserve_pct: 0.20     # Always keep 20% cash
